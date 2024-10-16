@@ -1,6 +1,7 @@
 const express = require('express')
 const chats = require('./data/data.js') 
-const dotenv = require('dotenv')
+const dotenv = require('dotenv') 
+const mongoose= require('mongoose')
 
 const app = express()   
 dotenv.config() 
@@ -20,7 +21,11 @@ app.get('/api/chats/:id', (req, res) => {
    const sindlechat=chats.find((i)=>i._id ===req.params.id)  
   
    res.send(sindlechat)
-})
+}) 
+ 
+mongoose.connect(process.env.MONGODB_URL)
+.then(()=>console.log("connected to mandogb")) 
+.catch((error)=>{console.log(error)})
 
 app.listen(PORT,()=>{
     console.log(`connected to ${PORT}`)
