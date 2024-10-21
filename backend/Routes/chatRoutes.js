@@ -5,7 +5,7 @@ const chatRoutes = express.Router()
 
 
 
-chatRoutes.get('/', authmiddleware, accesChat)  
+chatRoutes.post('/', authmiddleware, accesChat)  
 chatRoutes.get('/fetch', authmiddleware, fetchChat)  
 chatRoutes.post('/create',authmiddleware,createGroupChat )
 chatRoutes.put('/renamegroup',authmiddleware,renameGroupchat ) 
