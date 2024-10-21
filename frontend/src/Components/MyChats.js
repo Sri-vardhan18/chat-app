@@ -5,8 +5,9 @@ import { Box, Button, Stack, Text, useToast } from "@chakra-ui/react";
 import { AddIcon } from "@chakra-ui/icons";
 import ChatLoading from "./ChatLoading";
 import { getSender } from "../config/ChatLogic";
+import GroupChatModel from "./miscellenous/GroupChatModel";
 
-const MyChats = () => {
+const MyChats = ({fetchAgain}) => {
   const [loggedUser, setLoggedUser] = useState(); 
   console.log("loggedUser", loggedUser)
   const { user, setSelectedChat, chats, setChats, selectedChat } =
@@ -44,7 +45,7 @@ const MyChats = () => {
     setLoggedUser(data);
     fetchChats();
     // eslint-disable-next-line
-  }, []); 
+  }, [fetchAgain]); 
 
   console.log("chats", chats)
 
@@ -69,14 +70,16 @@ const MyChats = () => {
         justifyContent="space-between"
         alignItems="center"
       >
-        My Chats
+        My Chats 
+        <GroupChatModel>
         <Button
           display="flex"
           fontSize={{ base: "17px", md: "10px", lg: "17px" }}
           rightIcon={<AddIcon />}
         >
           New Group chat
-        </Button>
+        </Button> 
+        </GroupChatModel>
       </Box>
       <Box
         display="flex"
@@ -106,12 +109,12 @@ const MyChats = () => {
                     ? getSender(loggedUser, chat.users)
                     : chat.chatName}
                 </Text>
-                {chat.latestMessage && (
+                {chat.lastMessage && (
                   <Text fontSize="xs">
-                    <b>{chat.latestMessage.sender.name} : </b>
-                    {chat.latestMessage.content.length > 50
-                      ? chat.latestMessage.content.substring(0, 51) + "..."
-                      : chat.latestMessage.content}
+                    <b>{chat.lastMessage.sender.name} : </b>
+                    {chat.lastMessage.content.length > 50
+                      ? chat.lastMessage.content.substring(0, 51) + "..."
+                      : chat.lastMessage.content}
                   </Text>
                 )}
               </Box>

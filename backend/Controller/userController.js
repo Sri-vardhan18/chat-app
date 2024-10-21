@@ -43,7 +43,7 @@ const userRegister = asyncHandler(async (req, res, next) => {
         res.status(201).json({
             name: newUser.name,
             email: newUser.email,
-            id: newUser._id,
+            _id: newUser._id,
             pic: newUser.pic,
             token: GenerateToken(newUser._id),
         });
@@ -64,7 +64,7 @@ const userLogin=asyncHandler(async(req, res)=>{
         if(!validpassword) throw new Error('Please correct the password')  
         res.status(200).json({ name: validuser.name,
             email: validuser.email,
-            id: validuser._id,
+            _id: validuser._id,
             pic: validuser.pic,
             token: GenerateToken(validuser._id),})
     } 

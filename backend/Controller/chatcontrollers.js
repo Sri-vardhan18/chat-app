@@ -63,7 +63,8 @@ const fetchChat = async (req, res, next) => {
         results = await User.populate(results, {
             path: 'lastMessage.sender',
             select: 'name email pic',
-        });
+        }); 
+        
 
         res.status(200).send(results);
     } catch (error) {
@@ -71,44 +72,62 @@ const fetchChat = async (req, res, next) => {
     }
 }; 
 
-const createGroupChat=async(req,res,next)=>{   
-    const usersArray = JSON.parse(req.body.users);
-   try{
-    const groupchat =await Chat({ 
-        chatName:req.body.chatName, 
-        isGroupChat:true,
-        users:usersArray, 
-        isGroupAdmin:req.user
-    })  
-    await groupchat.save()  
-    const result =await Chat.findOne({_id:groupchat._id})  
-                    .populate('users','-password')
-                    .populate('isGroupAdmin', '-password')
-    res.status(400).json(result)
-   } 
-   catch(error){
-    next(error)
-   }
-    
-} 
-
-const renameGroupchat=async(req,res)=>{   
-    const {chatid, chatName}= req.body;
-   try{
-    const updated =await Chat.findByIdAndUpdate(chatid,{ chatName },{new:true})  
-    if(!updated){
-        next(errorhandler(400, 'error to update'))
+const createGroupChat = async (req, res, next) => {
+    // Check that users is an array
+    if (!Array.isArray(req.body.users) || !req.body.users.length) {
+      return res.status(400).json({ message: "Users must be a non-empty array" });
     }
+  
+    try {
+      const groupchat = await Chat({
+        chatName: req.body.chatName,
+        isGroupChat: true,
+        users: req.body.users,  // Use the array directly
+        isGroupAdmin: req.user,  // Assuming req.user is set correctly
+      });
+  
+      await groupchat.save();
+  
+      const result = await Chat.findOne({ _id: groupchat._id })
+        .populate('users', '-password')
+        .populate('isGroupAdmin', '-password');
+  
+      res.status(200).json(result);  
+    } catch (error) {
+      next(error);  
+    }
+  };
+
+
+  const renameGroupchat = async (req, res) => {
+    const { chatid, chatName } = req.body;
+  
+    try {
+      // Attempt to update the chat with the new name
+      const updated = await Chat.findByIdAndUpdate(
+        chatid,
+        { chatName },
+        { new: true }
+      );
+  
+     
+      if (!updated) {
+        return res.status(400).json({ message: 'Failed to update chat name' });
+      }
+  
     
-    const result =await Chat.findOne({_id: updated._id})  
-                    .populate('users','-password')
-                    .populate('isGroupAdmin', '-password')
-    res.status(400).json(result)
-   } 
-   catch(error){
-    res.status(400).json({message:error.message})
-   }
-} 
+      const result = await Chat.findOne({ _id: updated._id })
+        .populate('users', '-password')
+        .populate('isGroupAdmin', '-password');
+  
+      
+      return res.status(200).json(result); 
+    } catch (error) {
+      
+      return res.status(400).json({ message: error.message });
+    }
+  };
+  
 
 const addToGroup = asyncHandler(async (req, res) => {
     const { chatid, userid } = req.body;  
