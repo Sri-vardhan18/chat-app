@@ -16,15 +16,43 @@ import UpdateGroupChatModal from "./miscellenous/UpdateGroupChatModal";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import ScrollableChat from "./ScrollableChat";
+import io from "socket.io-client"; 
+import Lottie from "react-lottie"; 
+import animations from "../animation/typing.json"
+
+
+const ENDPOINT = "http://Localhost:5000"
+var socket , selectedChatCompare
 
 function SingleChat({ fetchAgain, setFetchagain }) {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [newMessage, setNewMessage] = useState(""); 
+  const [newMessage, setNewMessage] = useState("");  
+  const [socketConnect, setSocketConnected]=useState(false) 
+  const [typing, setTyping] = useState(false);
+  const [istyping, setIsTyping] = useState(false);
   const toast = useToast()
 
-  const { selectedChat, setSelectedChat, user } = useChatState();
+  const { selectedChat, setSelectedChat, user, notification, setNotification } = useChatState();
   console.log(selectedChat, "selectedChat");
+
+ console.log('notifications', notification)
+
+  const defaultOptions = {
+    loop: true,
+    autoplay: true,
+    animationData: animations,
+    rendererSettings: {
+      preserveAspectRatio: "xMidYMid slice",
+    },
+  };
+  useEffect(()=>{
+    socket = io(ENDPOINT) 
+    socket.emit('setup', user) 
+    socket.on('connected',()=>setSocketConnected(true)) 
+    socket.on('typing',()=>setIsTyping(true)) 
+    socket.on("stop typing", () => setIsTyping(false));
+  },[])
 
   const sendMessage = async (e) => {
     if (e.key === "Enter" && newMessage) {
@@ -41,6 +69,7 @@ function SingleChat({ fetchAgain, setFetchagain }) {
           chatid: selectedChat._id,
         }, config); 
         console.log(data, "hello") 
+        socket.emit('new message', data) 
 
         setMessages([...messages, data]) 
         setLoading(false) 
@@ -78,7 +107,8 @@ function SingleChat({ fetchAgain, setFetchagain }) {
 
        setMessages(data)  
        
-       setLoading(false)
+       setLoading(false) 
+       socket.emit("join chat", selectedChat._id)
 
 
     }catch(error){ 
@@ -93,14 +123,53 @@ function SingleChat({ fetchAgain, setFetchagain }) {
 
     }
 
-  } 
+  }  
+
+
+  useEffect(() => {
+    socket.on("message recieved", (newMessageRecieved) => {
+      if (
+        !selectedChatCompare || // if chat is not selected or doesn't match current chat
+        selectedChatCompare._id !== newMessageRecieved.chat._id
+      ) {
+        if (!notification.includes(newMessageRecieved)) {
+          setNotification([newMessageRecieved, ...notification]);
+          setFetchagain(!fetchAgain);
+        }
+      } else {
+        setMessages([...messages, newMessageRecieved]);
+      }
+    });
+  });
 
 useEffect(()=>{
-  fetchMessages()
-},[selectedChat])
+  fetchMessages() 
+  selectedChatCompare= selectedChat
+},[selectedChat]) 
+
+
   const typingHandler = (e) => {
-    setNewMessage(e.target.value);
-  };
+    setNewMessage(e.target.value); 
+
+    if (!socketConnect) return;
+
+    if (!typing) {
+      setTyping(true);
+      socket.emit("typing", selectedChat._id);
+    }
+    let lastTypingTime = new Date().getTime();
+    var timerLength = 3000;
+    setTimeout(() => {
+      var timeNow = new Date().getTime();
+      var timeDiff = timeNow - lastTypingTime;
+      if (timeDiff >= timerLength && typing) {
+        socket.emit("stop typing", selectedChat._id);
+        setTyping(false);
+      }
+    }, timerLength);
+  };  
+
+  
 
   return (
     < >
@@ -173,7 +242,7 @@ useEffect(()=>{
               isRequired
               mt={3}
             >
-              {/* {istyping ? (
+            {istyping ? (
                 <div>
                   <Lottie
                     options={defaultOptions}
@@ -184,7 +253,8 @@ useEffect(()=>{
                 </div>
               ) : (
                 <></>
-              )} */}
+              )}
+              {istyping ? <div>Loading...</div>:(<></>)}
               <Input
                 variant="filled"
                 bg="#E0E0E0"
