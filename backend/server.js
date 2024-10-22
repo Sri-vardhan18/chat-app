@@ -4,6 +4,7 @@ const dotenv = require('dotenv')
 const mongoose= require('mongoose') 
 const userRoutes = require('./Routes/userRoutes.js') 
 const chatRoutes = require('./Routes/chatRoutes.js')
+const messageRoutes = require('./Routes/messageRoutes.js')
 
 const app = express()   
 dotenv.config() 
@@ -28,7 +29,8 @@ app.get('/api/chats/:id', (req, res) => {
 })  
 
 app.use("/api/user", userRoutes)  
-app.use("/api/chat", chatRoutes)
+app.use("/api/chat", chatRoutes) 
+app.use("/api/messages", messageRoutes)
 
  
 mongoose.connect(process.env.MONGODB_URL)
