@@ -7,6 +7,7 @@ const chatRoutes = require('./Routes/chatRoutes.js')
 const messageRoutes = require('./Routes/messageRoutes.js') 
 const {Server} = require('socket.io')  
 const { createServer } = require('http');
+const path = require('path')
 
 const app = express()    
 const server=createServer(app)
@@ -23,9 +24,9 @@ app.use(express.json())
 const PORT = process.env.PORT || 5000
 
 
-app.get('/', (req, res)=>{
-    res.send('API Running')
-}) 
+// app.get('/', (req, res)=>{
+//     res.send('API Running')
+// }) 
 
 app.get('/api/chats', (req,res)=>{
     res.send(chats)
@@ -39,10 +40,28 @@ app.get('/api/chats/:id', (req, res) => {
 
 app.use("/api/user", userRoutes)  
 app.use("/api/chat", chatRoutes) 
-app.use("/api/messages", messageRoutes)
+app.use("/api/messages", messageRoutes)  
+
+
+
+if (process.env.NODE_ENV === 'production') {
+  // Serve static files from the frontend/build directory
+  app.use(express.static(path.join(__dirname, '..', 'frontend', 'build')));
+  
+  // Handle React routing, return all requests to React app
+  app.get('*', (req, res) => {
+    res.sendFile(path.resolve(__dirname, '..', 'frontend', 'build', 'index.html'));
+  });
+} else {
+  app.get('/', (req, res) => {
+    res.send('API Running');
+  });
+}
+
+
 
  
-mongoose.connect(process.env.MONGODB_URL)
+mongoose.connect(process.env.MONGODB_URL, {useNewUrlParser: true, useUnifiedTopology: true})
 .then(()=>console.log("connected to mandogb")) 
 .catch((error)=>{console.log(error)})  
 
